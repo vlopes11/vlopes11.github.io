@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Enhancing Performance and Security: Refactoring MsgPacker for Efficient Rust Code
+title: Enhancing Performance and Security - Refactoring MsgPacker
 ---
 
 # Introduction
