@@ -3,7 +3,7 @@ layout: post
 title: Enhancing Performance and Security - Refactoring MsgPacker
 ---
 
-Rust™ is renowned for its performance and safety features, making it an ideal choice for systems programming. This blog post focuses on improving the efficiency of Rust code through a performance-driven refactor of the [msgpacker](https://crates.io/crates/msgpacker) library. By implementing a set of design decisions, significant performance gains and enhanced security were achieved.
+[Rust](https://www.rust-lang.org/) is renowned for its performance and safety features, making it an ideal choice for systems programming. This blog post focuses on improving the efficiency of Rust code through a performance-driven refactor of the [msgpacker](https://crates.io/crates/msgpacker) library. By implementing a set of design decisions, significant performance gains and enhanced security were achieved.
 
 msgpacker is a [MessagePack](https://msgpack.org/) implementation focused on providing a simple API without compromising functionality.
 
@@ -80,8 +80,6 @@ However, such intermediate type might be useful for some scenarios where the use
 ## Lazy Functions for efficient serialization
 
 Rust structures consist of atomic types, and by covering the most atomic types, complex dependent types can be covered automatically. To minimize boilerplate code, a derive procedural macro called `MsgPacker` is provided. Users can implement encoding traits for types that contain attributes implementing encoding and decoding. The `#[msgpacker(map)]` and `#[msgpacker(array)]` attributes signal that a field is a map or an array, respectively.
-
-Rust structures are a compound of atomic types. Provided we cover the most atomic types, we can, by association, cover complex, dependent types automatically. The decision is to implement the encoding & decoding traits for the core types, and expect the user to derive such traits to their compound types. To avoid too much boilerplate, a derive proc macro `MsgPacker` is available, so the user can easily implement the encoding traits for a type that contains attributes that implements the encoding & decoding.
 
 This is somewhat similar to serde, but far simpler. serde attempts to create a general framework to signal types that can be serializable, and how the serialization engine show interface with such types. In msgpacker, we attempt a much simpler approach to optimize for ad-hoc serialization strategy. Often, general serialization greatly increases the complexity of the implementation, as the implementer will have to waste both abstraction & cycles with design traits that aren't part of the domain of the specific problem he is solving. One example of this phenomena happens [here](https://github.com/3Hren/msgpack-rust/blob/f4ad0d0257edfea460eb176cdb7d11ddfe97ba3b/rmp-serde/src/config.rs#L99-L101), where the implementer needs to specify boilerplate configuration on whether or not the format is human readable - and MessagePack is not! This example can be augmented to other parts of the code that, at high level of confidence, is the responsible for the performance difference between the two implementations.
 
