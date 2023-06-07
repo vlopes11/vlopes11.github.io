@@ -1,6 +1,6 @@
 ---
 layout: post
-title: MsgPacker: Enhancing performance and security
+title: "MsgPacker: Enhancing performance and security"
 ---
 
 [Rust](https://www.rust-lang.org/) is renowned for its performance and safety features, making it an ideal choice for systems programming. This blog post focuses on improving the efficiency of Rust code through a performance-driven refactor of the [msgpacker](https://crates.io/crates/msgpacker) library. By implementing a set of design decisions, significant performance gains and enhanced security were achieved.
