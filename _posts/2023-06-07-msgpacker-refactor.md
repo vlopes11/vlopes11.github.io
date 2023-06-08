@@ -67,6 +67,16 @@ It means he will have to allocate `bar` somewhere before instantiating `Foo`, an
 
 However, such intermediate type might be useful for some scenarios where the user will receive arbitrary data from I/O, and we have [rmpv](https://crates.io/crates/rmpv) that will cover such case.
 
+## Repeated code
+
+I opted to increase repeated code and decrease abstraction in order to generate a small set of functions as performant as possible, with the minimum code size.
+
+Extracting repeated code into a separate module is a common practice to ease software maintenance, but this might cause overhead as the compiler will not always be able to inline such abstractions - therefore, increasing the code size, as well as the chances of L1/L2/L3 cache miss.
+
+Removing repeated code and preserving atomic responsibility of functions is often beneficial, but contrary to popular belief, is not necessarily a win-win. We must always check how the compiler will emit code, what is a hot spot, and decide over the trade-off between code readability, maintainability, and performance.
+
+We can check [godbolt](https://rust.godbolt.org/#g:!((g:!((g:!((h:codeEditor,i:(filename:'1',fontScale:14,fontUsePx:'0',j:1,lang:rust,selection:(endColumn:44,endLineNumber:3,positionColumn:44,positionLineNumber:3,selectionStartColumn:44,selectionStartLineNumber:3,startColumn:44,startLineNumber:3),source:'use+core::iter%3B%0A%0Apub+fn+pack(val:+u8,+buf:+%26mut+Vec%3Cu8%3E)+-%3E+usize%0A%7B%0A++++if+val+%3C%3D+127+%7B%0A++++++++buf.extend(iter::once(val+%26+0x7f))%3B%0A++++++++1%0A++++%7D+else+%7B%0A++++++++buf.extend(iter::once(0xcc).chain(iter::once(val)))%3B%0A++++++++2%0A++++%7D%0A%7D'),l:'5',n:'0',o:'Rust+source+%231',t:'0')),k:33.333333333333336,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:r1670,deviceViewOpen:'1',filters:(b:'0',binary:'1',binaryObject:'1',commentOnly:'0',debugCalls:'1',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:1,lang:rust,libs:!(),options:'-C+opt-level%3D3',overrides:!((name:edition,value:'2021')),selection:(endColumn:18,endLineNumber:118,positionColumn:18,positionLineNumber:118,selectionStartColumn:18,selectionStartLineNumber:118,startColumn:18,startLineNumber:118),source:1),l:'5',n:'0',o:'+rustc+1.67.0+(Editor+%231)',t:'0')),k:33.333333333333336,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:output,i:(compilerName:'rustc+1.67.0',editorid:1,fontScale:14,fontUsePx:'0',j:1,wrap:'1'),l:'5',n:'0',o:'Output+of+rustc+1.67.0+(Compiler+%231)',t:'0')),k:33.33333333333333,l:'4',n:'0',o:'',s:0,t:'0')),l:'2',n:'0',o:'',t:'0')),version:4) where we emit the ASM code for `u8::pack`; as we can see, the pack code is minimal, and most of the overhead lies with the extend vec operation.
+
 ## Lazy Functions for efficient serialization
 
 Rust structures consist of atomic types, and by covering the most atomic types, complex dependent types can be covered automatically. To minimize boilerplate code, a derive procedural macro called `MsgPacker` is provided. Users can implement encoding traits for types that contain attributes implementing encoding and decoding. The `#[msgpacker(map)]` and `#[msgpacker(array)]` attributes signal that a field is a map or an array, respectively.
