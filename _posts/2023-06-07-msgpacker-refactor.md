@@ -5,11 +5,11 @@ title: "MsgPacker: Enhancing performance and security"
 
 [Rust](https://www.rust-lang.org/) is renowned for its performance and safety features, making it an ideal choice for systems programming. This blog post focuses on improving the efficiency of Rust code through a performance-driven refactor of the [msgpacker](https://crates.io/crates/msgpacker) library. By implementing a set of design decisions, significant performance gains and enhanced security were achieved.
 
-[msgpacker](https://crates.io/crates/msgpacker) is a [MessagePack](https://msgpack.org/) implementation focused on providing a simple API without compromising functionality.
+msgpacker is a [MessagePack](https://msgpack.org/) implementation focused on providing a simple API without compromising functionality.
 
 ## Benchmarks
 
-The benchmarks conducted on an `Intel(R) Core(TM) i9-9900X CPU @ 3.50GHz` showcased the superior performance of [msgpacker](https://crates.io/crates/msgpacker) compared to the well-known [rmp-serde](https://crates.io/crates/rmp-serde) library. The tests involved the serialization and deserialization of 1,000 entries of a complex structure. [msgpacker](https://crates.io/crates/msgpacker) outperformed rmp-serde by a substantial margin, exceeding 10x speed improvements.
+The benchmarks conducted on an `Intel(R) Core(TM) i9-9900X CPU @ 3.50GHz` showcased the superior performance of msgpacker compared to the well-known [rmp-serde](https://crates.io/crates/rmp-serde) library. The tests involved the serialization and deserialization of 1,000 entries of a complex structure. msgpacker outperformed rmp-serde by a substantial margin, exceeding 10x speed improvements.
 
 The target structure uses randomized, standard distribution instances, defined as:
 
@@ -47,7 +47,7 @@ The `Vec<u8>` and `String` will contain non-negligible amounts of data, ranging 
 
 ## Design decisions
 
-The previous version of [msgpacker](https://crates.io/crates/msgpacker) [employed an intermediate structure](https://github.com/codx-dev/msgpacker/blob/078e2833ec829bd231e47951d96f9df1fb2c5e7e/msgpacker/src/message_ref.rs#L48-L75) for parsing bytes from the protocol, allowing conversion to arbitrary types. However, this approach suffered from performance issues and potential vulnerabilities due to recursive type definitions.
+The previous version of msgpacker [employed an intermediate structure](https://github.com/codx-dev/msgpacker/blob/078e2833ec829bd231e47951d96f9df1fb2c5e7e/msgpacker/src/message_ref.rs#L48-L75) for parsing bytes from the protocol, allowing conversion to arbitrary types. However, this approach suffered from performance issues and potential vulnerabilities due to recursive type definitions.
 
 The previous implementation avoids unnecessary copy by using references to the original slices. This can be achieved with the temporary buffers created by [BufRead](https://doc.rust-lang.org/std/io/trait.BufRead.html) implementations. However, this will still incur overhead, as the deserialization will first be performed on this enum, and then finally translated to the target type.
 
@@ -71,13 +71,13 @@ However, such intermediate type might be useful for some scenarios where the use
 
 Rust structures consist of atomic types, and by covering the most atomic types, complex dependent types can be covered automatically. To minimize boilerplate code, a derive procedural macro called `MsgPacker` is provided. Users can implement encoding traits for types that contain attributes implementing encoding and decoding. The `#[msgpacker(map)]` and `#[msgpacker(array)]` attributes signal that a field is a map or an array, respectively.
 
-This is somewhat similar to serde, but far simpler. serde attempts to create a general framework to signal types that can be serializable, and how the serialization engine show interface with such types. In [msgpacker](https://crates.io/crates/msgpacker), we attempt a much simpler approach to optimize for ad-hoc serialization strategy. Often, general serialization greatly increases the complexity of the implementation, as the implementer will have to waste both abstraction & cycles with design traits that aren't part of the domain of the specific problem he is solving. One example of this phenomena happens [here](https://github.com/3Hren/msgpack-rust/blob/f4ad0d0257edfea460eb176cdb7d11ddfe97ba3b/rmp-serde/src/config.rs#L99-L101), where the implementer needs to specify boilerplate configuration on whether or not the format is human readable - and MessagePack is not! This example can be augmented to other parts of the code that, at high level of confidence, is the responsible for the performance difference between the two implementations.
+This is somewhat similar to serde, but far simpler. serde attempts to create a general framework to signal types that can be serializable, and how the serialization engine show interface with such types. In msgpacker, we attempt a much simpler approach to optimize for ad-hoc serialization strategy. Often, general serialization greatly increases the complexity of the implementation, as the implementer will have to waste both abstraction & cycles with design traits that aren't part of the domain of the specific problem he is solving. One example of this phenomena happens [here](https://github.com/3Hren/msgpack-rust/blob/f4ad0d0257edfea460eb176cdb7d11ddfe97ba3b/rmp-serde/src/config.rs#L99-L101), where the implementer needs to specify boilerplate configuration on whether or not the format is human readable - and MessagePack is not! This example can be augmented to other parts of the code that, at high level of confidence, is the responsible for the performance difference between the two implementations.
 
 ## Raw types vs Collections
 
 MessagePack deals in very simple terms - it will encode efficiently numbers, strings, arrays, and maps. Numbers and strings are trivial to be represented as lazy load, on-demand functions, but arrays and maps will require some minor tweaks.
 
-To handle collections, [msgpacker](https://crates.io/crates/msgpacker) leverages Rust's iterator-based representation. Collections implementing the map-like or array-like iterator interface can be encoded and decoded seamlessly. The library provides functions such as `pack_map` and `unpack_map` that accept and return any type adhering to the map-like interface. Additionally, a derive macro attribute simplifies the implementation for types containing map or array attributes.
+To handle collections, msgpacker leverages Rust's iterator-based representation. Collections implementing the map-like or array-like iterator interface can be encoded and decoded seamlessly. The library provides functions such as `pack_map` and `unpack_map` that accept and return any type adhering to the map-like interface. Additionally, a derive macro attribute simplifies the implementation for types containing map or array attributes.
 
 Rust represents collections as iterators. All the commonly used collections implements iterators of items for array-like implementations, and iterators of key-value pairs for map-like ones. We can take advantage of this fact and abuse this as generic, so we can cover any type that follows this pattern.
 
@@ -131,6 +131,6 @@ pub struct City {
 
 ## Motivation and Conclusion
 
-The motivation behind [msgpacker](https://crates.io/crates/msgpacker)'s development stemmed from a desire to create a GPU-accelerated frontend for [NeoVim](https://neovim.io/). While existing MessagePack implementations were functional, they were perceived as unnecessarily complex. Msgpacker's initial version demonstrated satisfactory performance but had vulnerabilities such as [recursion attacks](https://github.com/codx-dev/msgpacker/issues/4) and [eager allocation](https://github.com/codx-dev/msgpacker/issues/5).
+The motivation behind msgpacker's development stemmed from a desire to create a GPU-accelerated frontend for [NeoVim](https://neovim.io/). While existing MessagePack implementations were functional, they were perceived as unnecessarily complex. Msgpacker's initial version demonstrated satisfactory performance but had vulnerabilities such as [recursion attacks](https://github.com/codx-dev/msgpacker/issues/4) and [eager allocation](https://github.com/codx-dev/msgpacker/issues/5).
 
-The refactor of [msgpacker](https://crates.io/crates/msgpacker) aimed to enhance performance and security while simplifying the implementation. By eliminating the intermediate enum and utilizing lazy functions, significant performance gains were achieved, surpassing other popular libraries. The resulting code provides a more efficient and secure solution for MessagePack serialization in Rust.
+The refactor of msgpacker aimed to enhance performance and security while simplifying the implementation. By eliminating the intermediate enum and utilizing lazy functions, significant performance gains were achieved, surpassing other popular libraries. The resulting code provides a more efficient and secure solution for MessagePack serialization in Rust.
